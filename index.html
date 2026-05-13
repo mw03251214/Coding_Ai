@@ -329,17 +329,10 @@
     }
 
     grid.innerHTML = files.map(f => {
-      const folder = getFolder(f.path);
-      const isRoot = folder === '/';
-      const dirLabel = isRoot ? '根目录' : folder;
       return `<a class="file-card" href="./${encodeURI(f.path).replace(/%2F/g,'/')}" target="_blank">
         <div class="file-name">
           <span class="icon">📄</span>
-          <span>${escapeHtml(f.name)}</span>
-        </div>
-        <div class="file-path">
-          <span class="folder-badge">${escapeHtml(dirLabel)}</span>
-          <span style="margin-left:6px;">${escapeHtml(f.path)}</span>
+          <span>${escapeHtml(f.name.replace(/\.html$/i, ''))}</span>
         </div>
       </a>`;
     }).join('');
