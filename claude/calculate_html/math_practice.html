@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>数学小练习</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', cursive, sans-serif;
+      background: #FFF8F0; color: #333; min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    button { font-family: inherit; cursor: pointer; border: none; outline: none; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    button:active { transform: scale(0.88); }
+    #app { max-width: 960px; margin: 0 auto; padding: 16px; padding-top: 12px; }
+    .header-section { background: #fff; border-radius: 20px; padding: 16px 18px 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .range-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
+    .range-btn { flex: 0 0 auto; min-width: 52px; padding: 8px 6px; border-radius: 100px; background: #f0f0f0; color: #666; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; border: 2.5px solid transparent; }
+    .range-btn.selected { background: #4A90D9; color: #fff; border-color: #3a7bc8; box-shadow: 0 3px 10px rgba(74,144,217,0.35); }
+    .range-btn .range-label { display: block; font-size: 0.65rem; font-weight: 400; opacity: 0.7; margin-top: 1px; }
+    .range-btn.selected .range-label { opacity: 0.85; }
+    .op-row { display: flex; gap: 14px; justify-content: center; margin-bottom: 12px; align-items: center; }
+    .op-btn { padding: 7px 28px; border-radius: 100px; font-size: 1.05rem; font-weight: 700; background: #f0f0f0; color: #aaa; border: 2.5px solid transparent; letter-spacing: 1px; }
+    .op-btn.selected.add { background: #FF9500; color: #fff; border-color: #e68600; box-shadow: 0 3px 10px rgba(255,149,0,0.3); }
+    .op-btn.selected.sub { background: #AF52DE; color: #fff; border-color: #9a45c9; box-shadow: 0 3px 10px rgba(175,82,222,0.3); }
+    .count-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .count-row label { font-size: 1.05rem; color: #555; font-weight: 500; }
+    .count-row input[type="number"] { width: 80px; font-size: 1.2rem; font-weight: 600; padding: 7px 10px; -moz-appearance: textfield; border: 2.5px solid #d0d0d0; border-radius: 12px; background: #fafafa; }
+    .count-row input[type="number"]::-webkit-outer-spin-button, .count-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .count-row .hint { font-size: 0.85rem; color: #999; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .action-btn { padding: 10px 22px; border-radius: 100px; font-size: 1.0rem; font-weight: 600; color: #fff; letter-spacing: 1px; }
+    .action-btn:active { transform: scale(0.93); }
+    .btn-generate { background: linear-gradient(135deg, #4A90D9, #357ABD); }
+    .btn-start { background: linear-gradient(135deg, #FF9500, #e68600); }
+    .btn-submit { background: linear-gradient(135deg, #34C759, #2db84e); }
+    .btn-history { background: linear-gradient(135deg, #AF52DE, #9a45c9); }
+    .btn-pause { background: linear-gradient(135deg, #FF3B30, #d63028); }
+    .btn-pause.resume { background: linear-gradient(135deg, #FF9500, #e68600); }
+    .btn-disabled { opacity: 0.4; pointer-events: none; filter: grayscale(0.5); }
+    .btn-hidden { display: none !important; }
+    #timer-bar { display: none; position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #4A90D9, #357ABD); color: #fff; text-align: center; padding: 8px 0; font-size: 1.4rem; font-weight: 700; letter-spacing: 2px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 16px rgba(74,144,217,0.3); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+    #timer-bar.active { display: block; }
+    #timer-bar .timer-label { font-size: 0.7rem; font-weight: 400; opacity: 0.8; display: block; margin-bottom: 2px; letter-spacing: 3px; }
+    #timer-bar .timer-time { font-size: 1.6rem; }
+    #question-area { display: none; background: #fff; border-radius: 20px; padding: 20px 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    #question-area.active { display: block; }
+    .generate-hint { display: none; text-align: center; color: #FF9500; font-size: 0.95rem; font-weight: 600; margin-bottom: 14px; padding: 10px; background: #fff8e6; border-radius: 12px; border: 2px dashed #FF9500; }
+    .generate-hint.active { display: block; }
+    .question-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .question-item { display: flex; align-items: center; justify-content: center; padding: 10px 6px; background: #fafafc; border-radius: 14px; border: 2px solid #eee; gap: 4px; flex-wrap: nowrap; }
+    .question-item .q-text { font-size: 1.15rem; font-weight: 600; color: #333; white-space: nowrap; }
+    .question-item .q-index { font-size: 0.8rem; color: #999; margin-right: 2px; min-width: 26px; text-align: right; }
+    .question-item .q-eq { font-size: 1.15rem; font-weight: 600; color: #666; }
+    .stepper { display: inline-flex; align-items: center; gap: 1px; flex-shrink: 0; }
+    .stepper-btn {
+      width: 40px; height: 42px; border-radius: 50%; font-size: 1.5rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;
+      background: #f0f0f0; color: #555; user-select: none; border: 2px solid transparent; flex-shrink: 0;
+    }
+    .stepper-btn:active { transform: scale(0.85); }
+    .stepper-btn:disabled { opacity: 0.2; pointer-events: none; }
+    .stepper-btn.minus { background: #fff0ef; color: #FF3B30; border-color: #ffd4d0; }
+    .stepper-btn.plus  { background: #eafff0; color: #34C759; border-color: #c8f0d0; }
+    .stepper-input {
+      width: 58px; height: 42px; text-align: center; font-size: 1.2rem; font-weight: 700;
+      color: #333; padding: 0 2px; border-radius: 10px;
+      border: 2.5px solid #d0d0d0; background: #fff;
+      font-variant-numeric: tabular-nums; outline: none;
+      -moz-appearance: textfield;
+    }
+    .stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .stepper-input:focus { border-color: #4A90D9; box-shadow: 0 0 0 3px rgba(74,144,217,0.12); }
+    .stepper-input.correct { border-color: #34C759; background: #eafff0; color: #2db84e; }
+    .stepper-input.wrong   { border-color: #FF3B30; background: #fff0ef; color: #FF3B30; }
+    .stepper-input:disabled { opacity: 0.6; }
+    #result-banner { display: none; text-align: center; padding: 16px 10px; margin: 16px 0 8px; border-radius: 16px; background: linear-gradient(135deg, #f0f8ff, #e8f5e9); border: 2.5px solid #4A90D9; }
+    #result-banner.active { display: block; }
+    #result-banner .score { font-size: 2.2rem; font-weight: 800; color: #4A90D9; }
+    #result-banner .detail { font-size: 1.0rem; color: #666; margin-top: 6px; }
+    #result-banner .emoji { font-size: 2.8rem; }
+    #history-area { display: none; background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-top: 16px; }
+    #history-area.active { display: block; }
+    #history-area h2 { font-size: 1.3rem; color: #AF52DE; margin-bottom: 14px; text-align: center; }
+    .history-table-wrap { overflow-x: auto; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .history-table th { background: #f5f0fa; color: #7a5f9e; padding: 10px 8px; text-align: center; font-weight: 600; white-space: nowrap; }
+    .history-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    .history-table tr:nth-child(even) td { background: #fafafc; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 6px 16px; border-radius: 100px; background: #AF52DE; color: #fff; font-size: 0.85rem; font-weight: 600; }
+    .pagination button:disabled { opacity: 0.3; pointer-events: none; }
+    .pagination .page-info { font-size: 0.85rem; color: #888; }
+    .no-history { text-align: center; color: #bbb; padding: 30px 0; font-size: 1rem; }
+    #modal-overlay { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 20px; }
+    #modal-overlay.active { display: flex; }
+    #modal-box { background: #fff; border-radius: 24px; padding: 28px 24px 22px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    #modal-box .modal-icon { font-size: 3rem; margin-bottom: 8px; }
+    #modal-box .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: #333; }
+    #modal-box .modal-desc { font-size: 0.95rem; color: #888; margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 12px; justify-content: center; }
+    .modal-actions button { flex: 1; padding: 10px 16px; border-radius: 100px; font-size: 1rem; font-weight: 600; }
+    .modal-actions .btn-cancel { background: #f0f0f0; color: #666; }
+    .modal-actions .btn-confirm { background: #FF9500; color: #fff; }
+    @media (min-width: 640px) {
+      #app { padding: 24px; padding-top: 16px; }
+      .question-grid { grid-template-columns: 1fr 1fr; }
+      .range-btn { min-width: 60px; padding: 10px 10px; font-size: 0.95rem; }
+      .range-btn .range-label { font-size: 0.7rem; }
+      .op-btn { padding: 8px 32px; font-size: 1.1rem; }
+      .action-btn { padding: 12px 30px; font-size: 1.1rem; }
+      .stepper-btn { width: 46px; height: 46px; font-size: 1.6rem; }
+      .stepper-input { width: 66px; height: 46px; font-size: 1.35rem; }
+      .question-item .q-text { font-size: 1.3rem; }
+      .header-section { padding: 20px 24px 18px; }
+      #timer-bar .timer-time { font-size: 1.8rem; }
+    }
+    @media (min-width: 1024px) { #app { padding: 32px; padding-top: 20px; } .range-btn { min-width: 68px; padding: 10px 12px; font-size: 1rem; } }
+    @media (min-width: 480px) and (max-width: 639px) and (orientation: landscape) { .question-grid { grid-template-columns: 1fr 1fr; } .range-btn { min-width: 48px; padding: 6px 4px; font-size: 0.75rem; } .range-btn .range-label { display: none; } .header-section { padding: 10px 12px; } .count-row { margin-bottom: 8px; } }
+    @media (max-width: 380px) {
+      .range-btn { min-width: 42px; padding: 6px 3px; font-size: 0.7rem; } .range-btn .range-label { display: none; }
+      .op-btn { padding: 5px 18px; font-size: 0.85rem; }
+      .action-btn { padding: 8px 14px; font-size: 0.85rem; }
+      .stepper-btn { width: 34px; height: 36px; font-size: 1.2rem; }
+      .stepper-input { width: 48px; height: 36px; font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header-section">
+    <div class="range-row" id="range-row"></div>
+    <div class="op-row">
+      <button class="op-btn selected add" data-op="add">➕ 加法</button>
+      <button class="op-btn selected sub" data-op="sub">➖ 减法</button>
+    </div>
+    <div class="count-row">
+      <label for="count-input">📝 生成</label>
+      <input type="number" id="count-input" value="10" min="1" max="100">
+      <span class="hint">道题目</span>
+    </div>
+    <div class="action-row">
+      <button class="action-btn btn-generate" id="btn-generate">生成题目</button>
+      <button class="action-btn btn-start btn-hidden" id="btn-start">开始做题</button>
+      <button class="action-btn btn-pause btn-hidden" id="btn-pause">⏸ 暂停</button>
+      <button class="action-btn btn-submit btn-hidden" id="btn-submit">提交答案</button>
+      <button class="action-btn btn-history" id="btn-history">历史记录</button>
+    </div>
+  </div>
+  <div id="timer-bar">
+    <span class="timer-label">⏱ 计时中</span>
+    <span class="timer-time" id="timer-display">00:00</span>
+  </div>
+  <div id="question-area">
+    <div class="generate-hint" id="generate-hint"></div>
+    <div class="question-grid" id="question-grid"></div>
+    <div id="result-banner"></div>
+  </div>
+  <div id="history-area">
+    <h2>📋 历史记录</h2>
+    <div class="history-table-wrap">
+      <table class="history-table" id="history-table">
+        <thead><tr><th>序号</th><th>范围</th><th>题数</th><th>得分</th><th>用时</th><th>时间</th></tr></thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+    <div class="no-history" id="no-history">暂无做题记录，加油哦！💪</div>
+    <div class="pagination" id="history-pagination">
+      <button id="page-prev">上一页</button>
+      <span class="page-info" id="page-info">第 1 / 1 页</span>
+      <button id="page-next">下一页</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="action-btn btn-history" id="btn-close-history" style="background:linear-gradient(135deg,#999,#888);font-size:0.85rem;padding:6px 18px;">关闭历史</button>
+    </div>
+  </div>
+</div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div class="modal-icon" id="modal-icon">⏰</div>
+    <div class="modal-title" id="modal-title">准备开始做题？</div>
+    <div class="modal-desc" id="modal-desc">计时器将立即启动，准备好了吗？</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">再等等</button>
+      <button class="btn-confirm" id="modal-confirm">确定</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+var state = {
+  currentRange:10, questionCount:10, questions:[], userAnswers:[], touched:[],
+  isStarted:false, isSubmitted:false, isReviewing:false,
+  timerElapsed:0, timerStart:null, timerInterval:null, timerPaused:false,
+  pausedByUser:false, selectedOps:{add:true,sub:true}, historyPage:1, pendingAction:null
+};
+var $=function(i){return document.getElementById(i);};
+var ri=$('range-row'), ci=$('count-input'), bg=$('btn-generate'), bs=$('btn-start'), bp=$('btn-pause'), bm=$('btn-submit'), bh=$('btn-history'), qa=$('question-area'), qg=$('question-grid'), gh=$('generate-hint'), rb=$('result-banner'), tb=$('timer-bar'), td=$('timer-display'), ha=$('history-area'), hb=$('history-body'), nh=$('no-history'), pp=$('page-prev'), pn=$('page-next'), pi=$('page-info'), bch=$('btn-close-history'), mo=$('modal-overlay'), md=$('modal-desc'), mc=$('modal-cancel'), mf=$('modal-confirm');
+var mi=$('modal-icon'), mt=$('modal-title');
+function showModal(icon,title,desc,btnText,action){
+  mi.textContent=icon;mt.textContent=title;md.textContent=desc;
+  mf.textContent=btnText;state.pendingAction=action;
+  mo.classList.add('active');
+}
+var RGS=[10,20,30,40,50,60,70,80,90,100];
+function bldR(){
+  ri.innerHTML='';
+  RGS.forEach(function(r){
+    var b=document.createElement('button');b.className='range-btn'+(r===state.currentRange?' selected':'');b.dataset.range=r;b.innerHTML=r+'<span class="range-label">以内</span>';
+    b.addEventListener('click',function(){if(state.isStarted&&!state.isSubmitted&&!state.pausedByUser)return;document.querySelectorAll('.range-btn').forEach(function(x){x.classList.remove('selected');});this.classList.add('selected');state.currentRange=parseInt(this.dataset.range,10);});
+    ri.appendChild(b);
+  });
+}
+document.querySelectorAll('.op-btn').forEach(function(b){
+  b.addEventListener('click',function(){if(state.isStarted&&!state.isSubmitted&&!state.pausedByUser)return;var o=this.dataset.op;state.selectedOps[o]=!state.selectedOps[o];this.classList.toggle('selected');if(!state.selectedOps.add&&!state.selectedOps.sub){state.selectedOps[o]=true;this.classList.add('selected');}});
+});
+function rd(m,M){return Math.floor(Math.random()*(M-m+1))+m;}
+function g1(r){
+  var a=[];if(state.selectedOps.add)a.push('add');if(state.selectedOps.sub)a.push('sub');if(!a.length)return null;
+  var c=a[Math.floor(Math.random()*a.length)];
+  if(c==='add'){var x=rd(0,r),y=rd(0,r-x);return{a:x,b:y,op:'+',answer:x+y};}
+  else{var x=rd(0,r),y=rd(0,x);return{a:x,b:y,op:'-',answer:x-y};}
+}
+function mkK(q){if(q.op==='+'){var s=Math.min(q.a,q.b),l=Math.max(q.a,q.b);return'+:'+s+':'+l;}return'-:'+q.a+':'+q.b;}
+function isT(q){if(q.answer===0)return 1;if(q.a===0||q.b===0)return 1;if(q.op==='+'&&q.answer<3)return 1;return 0;}
+function gQs(r,c){
+  var u={},qs=[],ma=c*500,at=0;
+  while(qs.length<c&&at<ma){at++;var q=g1(r);if(!q)break;var k=mkK(q);if(u[k])continue;if(isT(q))continue;u[k]=1;qs.push(q);}
+  if(qs.length<c){at=0;while(qs.length<c&&at<ma){at++;var q=g1(r);if(!q)break;var k=mkK(q);if(u[k])continue;if(q.a===0&&q.b===0)continue;u[k]=1;qs.push(q);}}
+  return qs;
+}
+function sId(i){return'si_'+i;}
+function renderQ(qs){
+  qg.innerHTML='';state.userAnswers=[];state.touched=[];
+  qs.forEach(function(q,i){
+    var d=document.createElement('div');d.className='question-item';
+    var is=document.createElement('span');is.className='q-index';is.textContent=(i+1)+'.';
+    var tx=document.createElement('span');tx.className='q-text';tx.textContent=q.a+' '+q.op+' '+q.b;
+    var eq=document.createElement('span');eq.className='q-eq';eq.textContent='=';
+    var st=document.createElement('span');st.className='stepper';
+    var mb=document.createElement('button');mb.className='stepper-btn minus';mb.textContent='−';mb.dataset.idx=i;mb.disabled=!state.isStarted;
+    var inp=document.createElement('input');inp.className='stepper-input';inp.type='number';inp.id=sId(i);inp.value='';inp.disabled=!state.isStarted;
+    var pb=document.createElement('button');pb.className='stepper-btn plus';pb.textContent='+';pb.dataset.idx=i;pb.disabled=!state.isStarted;
+    state.userAnswers.push('');state.touched.push(false);
+    mb.addEventListener('click',function(){var idx=parseInt(this.dataset.idx);var el=document.getElementById(sId(idx));var v=parseInt(el.value,10)||0;if(v>0){v--;el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}});
+    pb.addEventListener('click',function(){var idx=parseInt(this.dataset.idx);var el=document.getElementById(sId(idx));var v=parseInt(el.value,10)||0;if(v<9999){v++;el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}});
+    inp.addEventListener('input',function(){var idx=parseInt(this.id.replace('si_',''));state.userAnswers[idx]=this.value;state.touched[idx]=true;});
+    st.appendChild(mb);st.appendChild(inp);st.appendChild(pb);
+    d.appendChild(is);d.appendChild(tx);d.appendChild(eq);d.appendChild(st);
+    qg.appendChild(d);
+  });
+  gh.textContent='准备就绪！请点击上方「开始做题」按钮开始答题 ✏️';gh.classList.add('active');
+}
+function fmt(ms){var s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function getE(){if(state.timerPaused||!state.timerStart)return state.timerElapsed;return state.timerElapsed+(Date.now()-state.timerStart);}
+function updT(){td.textContent=fmt(getE());}
+function startT(){state.isStarted=true;state.isSubmitted=false;state.pausedByUser=false;state.timerElapsed=0;state.timerStart=Date.now();state.timerPaused=false;tb.classList.add('active');updT();state.timerInterval=setInterval(updT,200);}
+function pauseT(){if(!state.timerStart||state.timerPaused)return;state.timerElapsed+=Date.now()-state.timerStart;state.timerStart=null;state.timerPaused=true;if(state.timerInterval){clearInterval(state.timerInterval);state.timerInterval=null;}}
+function resumeT(){if(!state.timerPaused||state.isSubmitted||state.pausedByUser)return;state.timerStart=Date.now();state.timerPaused=false;state.timerInterval=setInterval(updT,200);}
+function stopT(){if(state.timerInterval){clearInterval(state.timerInterval);state.timerInterval=null;}if(state.timerStart){state.timerElapsed+=Date.now()-state.timerStart;state.timerStart=null;}state.timerPaused=false;var e=state.timerElapsed;tb.classList.remove('active');return e;}
+document.addEventListener('visibilitychange',function(){if(document.hidden)pauseT();else resumeT();});
+function grd(){var c=0;document.querySelectorAll('.stepper-input').forEach(function(el,i){if(parseInt(el.value,10)===state.questions[i].answer)c++;});return c;}
+function showR(ct,t,el){var s=Math.round((ct/t)*100),ts=fmt(el),e=s===100?'🎉🏆':s>=80?'👍🌟':s>=60?'💪📚':'🤗加油';rb.innerHTML='<div class="emoji">'+e+'</div><div class="score">'+s+' 分</div><div class="detail">答对 '+ct+' / '+t+' 题 &nbsp;·&nbsp; 用时 '+ts+'</div>';rb.classList.add('active');return{s:s};}
+function subA(){
+  if(state.isSubmitted)return;
+  var el=stopT();state.isSubmitted=true;state.isReviewing=true;
+  var t=state.questions.length,ct=grd();
+  document.querySelectorAll('.stepper-input').forEach(function(el,i){
+    var q=state.questions[i],v=parseInt(el.value,10);el.classList.remove('correct','wrong');
+    if(v===q.answer){el.classList.add('correct');el.disabled=true;el.parentNode.querySelector('.minus').disabled=true;el.parentNode.querySelector('.plus').disabled=true;}
+    else{el.classList.add('wrong');el.disabled=false;el.parentNode.querySelector('.minus').disabled=false;el.parentNode.querySelector('.plus').disabled=false;}
+  });
+  var r=showR(ct,t,el);
+  var rec=getH();rec.unshift({range:state.currentRange,count:t,correct:ct,wrong:t-ct,score:r.s,time:fmt(el),elapsed:el,ts:new Date().toLocaleString('zh-CN',{hour12:false})});localStorage.setItem('math_practice_history',JSON.stringify(rec));
+  bs.classList.add('btn-hidden');bp.classList.add('btn-hidden');bm.textContent='重新检查';bm.classList.remove('btn-hidden');bm.classList.remove('btn-disabled');
+}
+function rech(){
+  if(!state.isReviewing)return;
+  var t=state.questions.length,still=0;
+  document.querySelectorAll('.stepper-input').forEach(function(el,i){
+    if(el.classList.contains('correct'))return;
+    var q=state.questions[i],v=parseInt(el.value,10);
+    if(v===q.answer){el.classList.remove('wrong');el.classList.add('correct');el.disabled=true;el.parentNode.querySelector('.minus').disabled=true;el.parentNode.querySelector('.plus').disabled=true;}
+    else{still++;el.classList.add('wrong');el.parentNode.querySelector('.minus').disabled=false;el.parentNode.querySelector('.plus').disabled=false;}
+  });
+  var cc=grd(),el=state.timerElapsed,r=showR(cc,t,el);
+  var rec=getH();if(rec.length>0){rec[0].correct=cc;rec[0].wrong=t-cc;rec[0].score=r.s;localStorage.setItem('math_practice_history',JSON.stringify(rec));}
+  if(still===0){bm.textContent='✅ 全部正确';bm.classList.add('btn-disabled');state.isReviewing=false;}
+  else{bm.textContent='重新检查';}
+}
+function getH(){try{return JSON.parse(localStorage.getItem('math_practice_history')||'[]');}catch(e){return[];}}
+function rendH(pg){
+  var r=getH();
+  if(r.length===0){hb.innerHTML='';nh.style.display='block';document.querySelector('.history-table-wrap').style.display='none';pp.disabled=true;pn.disabled=true;pi.textContent='第 0 / 0 页';return;}
+  nh.style.display='none';document.querySelector('.history-table-wrap').style.display='block';
+  var pp2=10,tp=Math.ceil(r.length/pp2);if(pg<1)pg=1;if(pg>tp)pg=tp;state.historyPage=pg;
+  var st=(pg-1)*pp2,pgs=r.slice(st,st+pp2),h='';
+  pgs.forEach(function(r2,i){var idx=st+i+1,c=r2.score>=80?'#34C759':r2.score>=60?'#FF9500':'#FF3B30';h+='<tr><td>'+idx+'</td><td>'+r2.range+'以内</td><td>'+r2.count+'</td><td style="font-weight:700;color:'+c+'">'+r2.score+'</td><td>'+r2.time+'</td><td style="font-size:0.8rem;color:#999">'+(r2.ts||'')+'</td></tr>';});
+  hb.innerHTML=h;pi.textContent='第 '+pg+' / '+tp+' 页';pp.disabled=pg<=1;pn.disabled=pg>=tp;
+}
+bg.addEventListener('click',function(){
+  if(state.isStarted)stopT();
+  var c=parseInt(ci.value,10);if(isNaN(c)||c<1){c=1;ci.value=1;}else if(c>100){c=100;ci.value=100;}
+  state.questionCount=c;state.questions=gQs(state.currentRange,state.questionCount);
+  state.isStarted=false;state.isSubmitted=false;state.isReviewing=false;state.pausedByUser=false;
+  renderQ(state.questions);qa.classList.add('active');rb.classList.remove('active');rb.innerHTML='';tb.classList.remove('active');
+  bs.classList.remove('btn-hidden');bs.classList.remove('btn-disabled');bp.classList.add('btn-hidden');bp.textContent='⏸ 暂停';bp.classList.remove('resume');bm.classList.add('btn-hidden');bm.classList.remove('btn-disabled');bm.textContent='提交答案';
+});
+bs.addEventListener('click',function(){
+  if(!state.selectedOps.add&&!state.selectedOps.sub){alert('请至少选择加法或减法！');return;}
+  var d='共 '+state.questions.length+' 题，'+state.currentRange+'以内'+(state.selectedOps.add?'加法':'')+(state.selectedOps.add&&state.selectedOps.sub?'和':'')+(state.selectedOps.sub?'减法':'')+'，准备好就开始吧！';
+  showModal('⏰','准备开始做题？',d,'开始做题','start');
+});
+mf.addEventListener('click',function(){
+  if(!state.pendingAction)return;
+  var action=state.pendingAction;state.pendingAction=null;
+  mo.classList.remove('active');
+  if(action==='start'){
+    document.querySelectorAll('.stepper-input').forEach(function(el){el.value='';el.className='stepper-input';el.disabled=false;});
+    state.userAnswers=new Array(state.questions.length).fill('');state.touched=new Array(state.questions.length).fill(false);
+    rb.classList.remove('active');gh.classList.remove('active');
+    document.querySelectorAll('.stepper-btn').forEach(function(b){b.disabled=false;});
+    startT();
+    bs.classList.add('btn-hidden');bp.classList.remove('btn-hidden');bm.classList.remove('btn-hidden');
+  }else if(action==='submit'){
+    subA();
+  }// info: just close, no extra action needed
+});
+mc.addEventListener('click',function(){mo.classList.remove('active');});
+mo.addEventListener('click',function(e){if(e.target===mo)mo.classList.remove('active');});
+bp.addEventListener('click',function(){
+  if(state.pausedByUser){state.pausedByUser=false;resumeT();bp.textContent='⏸ 暂停';bp.classList.remove('resume');}
+  else{state.pausedByUser=true;pauseT();bp.textContent='▶ 继续';bp.classList.add('resume');}
+});
+bm.addEventListener('click',function(){
+  if(state.isSubmitted){rech();return;}
+  if(!state.isStarted)return;
+  var t=state.questions.length,a=state.touched.filter(function(x){return x;}).length;
+  if(a<t){showModal('✏️','还有题目未作答','还有 '+(t-a)+' 题没有填写答案，请点击 +/− 按钮或直接输入答案后再提交！','知道了','info');return;}
+  showModal('📝','确认提交答案？','提交后将自动评分，确定要提交吗？','提交答案','submit');
+});
+bh.addEventListener('click',function(){ha.classList.toggle('active');if(ha.classList.contains('active')){rendH(state.historyPage);setTimeout(function(){ha.scrollIntoView({behavior:'smooth',block:'start'});},100);}});
+bch.addEventListener('click',function(){ha.classList.remove('active');});
+pp.addEventListener('click',function(){rendH(state.historyPage-1);});
+pn.addEventListener('click',function(){rendH(state.historyPage+1);});
+bldR();bs.classList.add('btn-hidden');bp.classList.add('btn-hidden');bm.classList.add('btn-hidden');
+ci.addEventListener('change',function(){var v=parseInt(this.value,10);if(isNaN(v)||v<1)v=1;if(v>100)v=100;this.value=v;state.questionCount=v;});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!bm.classList.contains('btn-hidden')&&!bm.classList.contains('btn-disabled')){if(state.isStarted&&!state.isSubmitted)bm.click();}});
+})();
+</script>
+</body>
+</html>
