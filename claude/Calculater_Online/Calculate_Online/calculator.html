@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计算器</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .calculator {
+    width: 380px;
+    background: #1e293b;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .display {
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  .display .expression {
+    color: #94a3b8;
+    font-size: 16px;
+    min-height: 24px;
+    word-break: break-all;
+    text-align: right;
+    width: 100%;
+  }
+
+  .display .result {
+    color: #f1f5f9;
+    font-size: 42px;
+    font-weight: 300;
+    word-break: break-all;
+    text-align: right;
+    width: 100%;
+    line-height: 1.2;
+    transition: font-size 0.1s;
+  }
+
+  .display .result.small {
+    font-size: 32px;
+  }
+
+  .display .result.xsmall {
+    font-size: 24px;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  button {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 22px;
+    font-family: inherit;
+    padding: 18px 0;
+    border-radius: 16px;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  button:active {
+    transform: scale(0.92);
+  }
+
+  .btn-number {
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .btn-number:hover {
+    background: #3b4f6b;
+  }
+
+  .btn-number:active {
+    background: #475569;
+  }
+
+  .btn-operator {
+    background: #f97316;
+    color: #fff;
+  }
+
+  .btn-operator:hover {
+    background: #ea580c;
+  }
+
+  .btn-operator:active {
+    background: #c2410c;
+  }
+
+  .btn-operator.active {
+    background: #fff;
+    color: #f97316;
+  }
+
+  .btn-function {
+    background: #475569;
+    color: #f1f5f9;
+  }
+
+  .btn-function:hover {
+    background: #5a6b82;
+  }
+
+  .btn-function:active {
+    background: #6b7d96;
+  }
+
+  .btn-equals {
+    background: #f97316;
+    color: #fff;
+  }
+
+  .btn-equals:hover {
+    background: #ea580c;
+  }
+
+  .btn-equals:active {
+    background: #c2410c;
+  }
+
+  .span-two {
+    grid-column: span 2;
+  }
+
+  .btn-zero {
+    grid-column: span 2;
+  }
+
+  /* Responsive */
+  @media (max-width: 420px) {
+    .calculator {
+      width: 100%;
+      max-width: 380px;
+      padding: 16px;
+      border-radius: 16px;
+      margin: 12px;
+    }
+
+    .buttons {
+      gap: 8px;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 15px 0;
+      border-radius: 12px;
+    }
+
+    .display .result {
+      font-size: 36px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="calculator" role="application" aria-label="计算器">
+  <div class="display">
+    <div class="expression" id="expression"></div>
+    <div class="result" id="result">0</div>
+  </div>
+  <div class="buttons">
+    <button class="btn-function" data-action="clear">AC</button>
+    <button class="btn-function" data-action="sign">&#177;</button>
+    <button class="btn-function" data-action="percent">&#37;</button>
+    <button class="btn-operator" data-action="divide">÷</button>
+
+    <button class="btn-number" data-action="7">7</button>
+    <button class="btn-number" data-action="8">8</button>
+    <button class="btn-number" data-action="9">9</button>
+    <button class="btn-operator" data-action="multiply">×
+
+    <button class="btn-number" data-action="4">4</button>
+    <button class="btn-number" data-action="5">5</button>
+    <button class="btn-number" data-action="6">6</button>
+    <button class="btn-operator" data-action="subtract">−
+
+    <button class="btn-number" data-action="1">1</button>
+    <button class="btn-number" data-action="2">2</button>
+    <button class="btn-number" data-action="3">3</button>
+    <button class="btn-operator" data-action="add">+</button>
+
+    <button class="btn-number btn-zero" data-action="0">0</button>
+    <button class="btn-number" data-action="decimal">.</button>
+    <button class="btn-equals" data-action="calculate">=</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---------- State ----------
+    const state = {
+      current: '0',       // current input string
+      previous: '',       // previous operand string
+      operation: null,    // '+', '-', '*', '/'
+      resetNext: false,   // next digit should start fresh
+      justEvaluated: false, // = was just pressed
+      fullExpression: '', // expression shown in the upper display
+      lastOperator: null, // operator before = was pressed (for repeated =)
+      lastOperand: '',    // right operand before = (for repeated =)
+    };
+
+    // ---------- DOM refs ----------
+    const resultEl = document.getElementById('result');
+    const exprEl = document.getElementById('expression');
+
+    // ---------- Helpers ----------
+    function formatNumber(n) {
+      const str = String(n);
+      // If it's already in scientific notation, return as-is
+      if (str.includes('e')) return str;
+      // Add thousands separators for the integer part
+      const parts = str.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    }
+
+    function updateDisplay() {
+      // Show current value
+      let displayVal = state.current;
+
+      // Try to format nicely, but handle errors
+      const num = parseFloat(displayVal);
+      if (!isNaN(num) && isFinite(num)) {
+        // Limit length
+        if (displayVal.length > 15) {
+          resultEl.className = 'result xsmall';
+        } else if (displayVal.length > 11) {
+          resultEl.className = 'result small';
+        } else {
+          resultEl.className = 'result';
+        }
+        resultEl.textContent = formatNumber(displayVal);
+      } else {
+        resultEl.className = 'result';
+        resultEl.textContent = displayVal; // e.g. "Error"
+      }
+
+      // Show expression
+      exprEl.textContent = state.fullExpression;
+    }
+
+    function evaluate(a, op, b) {
+      const x = parseFloat(a);
+      const y = parseFloat(b);
+      if (isNaN(x) || isNaN(y)) return NaN;
+
+      switch (op) {
+        case '+': return x + y;
+        case '-': return x - y;
+        case '*': return x * y;
+        case '/': return y === 0 ? (x === 0 ? NaN : Infinity) : x / y;
+        default: return NaN;
+      }
+    }
+
+    // Convert operator for display
+    function opDisplay(op) {
+      switch (op) {
+        case '+': return '+';
+        case '-': return '−';
+        case '*': return '×';
+        case '/': return '÷';
+        default: return op;
+      }
+    }
+
+    // ---------- Actions ----------
+    function inputDigit(digit) {
+      if (state.resetNext) {
+        state.current = digit;
+        state.resetNext = false;
+        // Clear the expression when starting fresh after equals
+        if (state.justEvaluated) {
+          state.fullExpression = '';
+          state.previous = '';
+          state.operation = null;
+          state.justEvaluated = false;
+          state.lastOperator = null;
+          state.lastOperand = '';
+        }
+      } else {
+        if (state.current === '0' && digit !== '.') {
+          state.current = digit;
+        } else {
+          if (state.current.replace('-', '').replace('.', '').length >= 14) return;
+          state.current += digit;
+        }
+      }
+      updateDisplay();
+    }
+
+    function inputDecimal() {
+      if (state.resetNext) {
+        state.current = '0.';
+        state.resetNext = false;
+        if (state.justEvaluated) {
+          state.fullExpression = '';
+          state.previous = '';
+          state.operation = null;
+          state.justEvaluated = false;
+          state.lastOperator = null;
+          state.lastOperand = '';
+        }
+        updateDisplay();
+        return;
+      }
+      if (!state.current.includes('.')) {
+        state.current += '.';
+      }
+      updateDisplay();
+    }
+
+    function handleOperator(op) {
+      const curr = state.current;
+
+      if (state.operation && !state.resetNext) {
+        // Chain calculation
+        const result = evaluate(state.previous, state.operation, curr);
+        if (!isFinite(result)) {
+          state.current = 'Error';
+          state.fullExpression = '';
+          state.previous = '';
+          state.operation = null;
+          state.resetNext = true;
+          updateDisplay();
+          return;
+        }
+        const resultStr = String(parseFloat(result.toFixed(10)));
+        state.current = resultStr;
+        updateDisplay();
+      }
+
+      // If we just evaluated, start a new chain with the result as previous
+      if (state.justEvaluated) {
+        state.justEvaluated = false;
+      }
+
+      state.operation = op;
+      state.previous = state.current;
+      state.resetNext = true;
+      state.fullExpression = `${formatNumber(state.previous)} ${opDisplay(op)}`;
+      state.lastOperator = null;
+      state.lastOperand = '';
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (!state.operation || state.previous === '') return;
+
+      const curr = state.current;
+      const prev = state.previous;
+      const op = state.operation;
+
+      // Save for repeated = presses
+      state.lastOperator = op;
+      state.lastOperand = curr;
+
+      const result = evaluate(prev, op, curr);
+
+      if (!isFinite(result)) {
+        state.current = isNaN(result) ? 'Error' : 'Cannot divide by zero';
+        state.fullExpression = `${formatNumber(prev)} ${opDisplay(op)} ${formatNumber(curr)} =`;
+        state.operation = null;
+        state.previous = '';
+        state.resetNext = true;
+        state.justEvaluated = true;
+        updateDisplay();
+        return;
+      }
+
+      const resultStr = String(parseFloat(result.toFixed(10)));
+      state.fullExpression = `${formatNumber(prev)} ${opDisplay(op)} ${formatNumber(curr)} =`;
+      state.current = resultStr;
+      state.operation = null;
+      state.previous = '';
+      state.resetNext = true;
+      state.justEvaluated = true;
+      updateDisplay();
+    }
+
+    // Pressing = repeatedly re-applies the last operation
+    function repeatEquals() {
+      if (state.lastOperator === null || state.lastOperand === '') return;
+      const curr = state.current;
+      const op = state.lastOperator;
+      const operand = state.lastOperand;
+
+      const result = evaluate(curr, op, operand);
+      if (!isFinite(result)) {
+        state.current = isNaN(result) ? 'Error' : 'Cannot divide by zero';
+        state.fullExpression = `${formatNumber(curr)} ${opDisplay(op)} ${formatNumber(operand)} =`;
+        state.operation = null;
+        state.previous = '';
+        state.resetNext = true;
+        state.justEvaluated = true;
+        updateDisplay();
+        return;
+      }
+
+      const resultStr = String(parseFloat(result.toFixed(10)));
+      state.fullExpression = `${formatNumber(curr)} ${opDisplay(op)} ${formatNumber(operand)} =`;
+      state.current = resultStr;
+      state.resetNext = true;
+      state.justEvaluated = true;
+      updateDisplay();
+    }
+
+    function clearAll() {
+      state.current = '0';
+      state.previous = '';
+      state.operation = null;
+      state.resetNext = false;
+      state.justEvaluated = false;
+      state.fullExpression = '';
+      state.lastOperator = null;
+      state.lastOperand = '';
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (state.resetNext || state.justEvaluated) return;
+      if (state.current.length <= 1 || (state.current.length === 2 && state.current.startsWith('-'))) {
+        state.current = '0';
+      } else {
+        state.current = state.current.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      if (state.current === '0') return;
+      if (state.current.startsWith('-')) {
+        state.current = state.current.slice(1);
+      } else {
+        state.current = '-' + state.current;
+      }
+      // Update expression if in the middle of an operation
+      if (state.operation && state.resetNext) {
+        state.previous = state.current;
+      }
+      updateDisplay();
+    }
+
+    function percent() {
+      const num = parseFloat(state.current);
+      if (isNaN(num)) return;
+      const result = num / 100;
+      state.current = String(parseFloat(result.toFixed(10)));
+      if (state.operation && state.resetNext) {
+        state.previous = state.current;
+      }
+      updateDisplay();
+    }
+
+    // ---------- Dispatch ----------
+    function dispatch(action) {
+      // Remove active class from operator buttons
+      document.querySelectorAll('.btn-operator').forEach(btn => btn.classList.remove('active'));
+
+      switch (action) {
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+          inputDigit(action);
+          break;
+        case 'decimal':
+          inputDecimal();
+          break;
+        case 'add':
+          handleOperator('+');
+          highlightActiveOp('add');
+          break;
+        case 'subtract':
+          handleOperator('-');
+          highlightActiveOp('subtract');
+          break;
+        case 'multiply':
+          handleOperator('*');
+          highlightActiveOp('multiply');
+          break;
+        case 'divide':
+          handleOperator('/');
+          highlightActiveOp('divide');
+          break;
+        case 'calculate':
+          if (state.justEvaluated) {
+            repeatEquals();
+          } else {
+            calculate();
+          }
+          break;
+        case 'clear':
+          clearAll();
+          break;
+        case 'backspace':
+          backspace();
+          break;
+        case 'sign':
+          toggleSign();
+          break;
+        case 'percent':
+          percent();
+          break;
+      }
+    }
+
+    function highlightActiveOp(action) {
+      const map = { 'add': '+', 'subtract': '-', 'multiply': '*', 'divide': '/' };
+      const op = map[action];
+      document.querySelectorAll('.btn-operator').forEach(btn => {
+        if (btn.dataset.action === action) {
+          btn.classList.add('active');
+        }
+      });
+    }
+
+    // ---------- Event binding ----------
+    // Button clicks
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        dispatch(btn.dataset.action);
+      });
+    });
+
+    // Keyboard support
+    const keyMap = {
+      '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+      '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+      '.': 'decimal',
+      '+': 'add',
+      '-': 'subtract',
+      '*': 'multiply',
+      '/': 'divide',
+      'Enter': 'calculate',
+      '=': 'calculate',
+      'Escape': 'clear',
+      'c': 'clear',
+      'C': 'clear',
+      'Backspace': 'backspace',
+      'Delete': 'clear',
+      '%': 'percent',
+    };
+
+    document.addEventListener('keydown', (e) => {
+      const action = keyMap[e.key];
+      if (action) {
+        e.preventDefault();
+        dispatch(action);
+      }
+    });
+
+    // Initial render
+    updateDisplay();
+  })();
+</script>
+
+</body>
+</html>
